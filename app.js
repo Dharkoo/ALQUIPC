@@ -22,14 +22,12 @@ inputCliente.addEventListener('input', function () {
   this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
 });
 
-// Bloquear letras en Teléfono e ID Cliente (Solo números)
+// Bloquear letras en Teléfono (Solo números)
 inputTelefono.addEventListener('input', function () {
   this.value = this.value.replace(/[^0-9]/g, '');
 });
 
-inputIdCliente.addEventListener('input', function () {
-  this.value = this.value.replace(/[^0-9]/g, '');
-});
+
 
 // =================================================================
 // 2. PROCESAMIENTO Y VALIDACIÓN FINAL AL ENVIAR
