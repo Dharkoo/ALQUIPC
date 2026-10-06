@@ -22,12 +22,14 @@ inputCliente.addEventListener('input', function () {
   this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
 });
 
-// Bloquear letras en Teléfono (Solo números)
+// Bloquear letras en Teléfono e ID Cliente (Solo números)
 inputTelefono.addEventListener('input', function () {
   this.value = this.value.replace(/[^0-9]/g, '');
 });
 
-
+inputIdCliente.addEventListener('input', function () {
+  this.value = this.value.replace(/[^0-9]/g, '');
+});
 
 // =================================================================
 // 2. PROCESAMIENTO Y VALIDACIÓN FINAL AL ENVIAR
@@ -35,7 +37,7 @@ inputTelefono.addEventListener('input', function () {
 
 form.addEventListener('submit', function (e) {
   e.preventDefault();
-
+  const MIN_LONGITUD_NOMBRE = 3;
   const cliente = inputCliente.value.trim();
   const idCliente = inputIdCliente.value.trim();
   const telefono = inputTelefono.value.trim();
@@ -58,6 +60,7 @@ form.addEventListener('submit', function (e) {
     inputIdCliente.focus();
     return;
   }
+  
 
   // --- Validación: Teléfono (mínimo 7 dígitos) ---
   if (telefono === '' || telefono.length < 7) {
@@ -94,6 +97,12 @@ form.addEventListener('submit', function (e) {
     return;
   }
 
+  if (diasAdicionales > 30) {
+    alert("El número de días adicionales no puede ser mayor a 30.");
+    inputDiasAdicionales.focus();
+    return;
+  }
+
   // =================================================================
   // 3. CÁLCULOS DE FACTURACIÓN
   // =================================================================
@@ -105,7 +114,7 @@ form.addEventListener('submit', function (e) {
   // Regla: 2% por día adicional[cite: 3].
   // Mejora para proteger a la empresa: Se fija un tope máximo del 50% de descuento[cite: 3].
   const valorBrutoDiasAdicionales = numEquipos * diasAdicionales * PRECIO_DIA_EQUIPO;
-  const porcentajeDescAdicional = Math.min(diasAdicionales * 0.02, 0.50); // Máximo 50% de descuento[cite: 3]
+  const porcentajeDescAdicional = Math.min(diasAdicionales * 0.02, 0.1); // Máximo 50% de descuento[cite: 3]
   const montoDescuentoDiasAdicionales = valorBrutoDiasAdicionales * porcentajeDescAdicional;
   const valorNetoDiasAdicionales = valorBrutoDiasAdicionales - montoDescuentoDiasAdicionales;
 
@@ -126,7 +135,7 @@ form.addEventListener('submit', function (e) {
   const totalDescuentos = montoDescuentoDiasAdicionales + descuentoServicio;
 
   // Valor Total Final a Pagar
-  const totalAPagar = subtotalFactura + incrementoServicio - descuentoServicio;
+  const totalAPagar = subtotalFactura + incrementoServicio - descuentoServicio -montoDescuentoDiasAdicionales;
 
   // =================================================================
   // 4. GENERACIÓN DE LA SALIDA FORMATO SENA[cite: 2]
@@ -145,7 +154,10 @@ No. Días Iniciales:       ${diasIniciales}
 Valor Alquiler:           $ ${valorAlquiler}
 No. Días adicionales:     ${diasAdicionales}
 Valor días adicionales:   $ ${Math.round(valorNetoDiasAdicionales)}
-Descuentos:               $ ${Math.round(totalDescuentos)}
+Aumentos del lugar:       $ ${Math.round(incrementoServicio)}
+Descuentos del lugar:     $ ${Math.round(descuentoServicio)}
+Descuentos Dias ADD:      $ ${Math.round(montoDescuentoDiasAdicionales)}
+Total Descuentos:         $ ${Math.round(totalDescuentos)}
 
 Total a pagar:            $ ${Math.round(totalAPagar)}
 
