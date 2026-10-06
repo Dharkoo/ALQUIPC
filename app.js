@@ -53,6 +53,11 @@ form.addEventListener('submit', function (e) {
     inputCliente.focus();
     return;
   }
+  if (cliente.length < MIN_LONGITUD_NOMBRE) {
+  alert(`El nombre del cliente debe tener al menos ${MIN_LONGITUD_NOMBRE} caracteres.`);
+  inputCliente.focus();
+  return;
+  }
 
   // --- Validación: ID Cliente ---
   if (idCliente === '') {
