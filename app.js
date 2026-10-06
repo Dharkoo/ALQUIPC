@@ -1,45 +1,139 @@
-const PRECIO_DIA_EQUIPO = 35000; //[cite: 3]
+// Constante base según los requerimientos del negocio ($35.000 por día/equipo)[cite: 3]
+const PRECIO_DIA_EQUIPO = 35000;
 
-document.getElementById('factura-form').addEventListener('submit', function(e) {
+// Referencias a los elementos del formulario y la terminal
+const form = document.getElementById('factura-form');
+const inputCliente = document.getElementById('cliente');
+const inputIdCliente = document.getElementById('idCliente');
+const inputTelefono = document.getElementById('telefono');
+const inputEmail = document.getElementById('email');
+const inputTipoServicio = document.getElementById('tipoServicio');
+const inputNumEquipos = document.getElementById('numEquipos');
+const inputDiasIniciales = document.getElementById('diasIniciales');
+const inputDiasAdicionales = document.getElementById('diasAdicionales');
+const outputTerminal = document.getElementById('output-terminal');
+
+// =================================================================
+// 1. VALIDACIONES EN TIEMPO REAL (Restricción de caracteres)
+// =================================================================
+
+// Bloquear números y caracteres especiales en el nombre del cliente
+inputCliente.addEventListener('input', function () {
+  this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+});
+
+// Bloquear letras en Teléfono e ID Cliente (Solo números)
+inputTelefono.addEventListener('input', function () {
+  this.value = this.value.replace(/[^0-9]/g, '');
+});
+
+inputIdCliente.addEventListener('input', function () {
+  this.value = this.value.replace(/[^0-9]/g, '');
+});
+
+// =================================================================
+// 2. PROCESAMIENTO Y VALIDACIÓN FINAL AL ENVIAR
+// =================================================================
+
+form.addEventListener('submit', function (e) {
   e.preventDefault();
 
-  // Captura de datos[cite: 3]
-  const cliente = document.getElementById('cliente').value;
-  const idCliente = document.getElementById('idCliente').value;
-  const telefono = document.getElementById('telefono').value;
-  const email = document.getElementById('email').value;
-  const tipoServicio = document.getElementById('tipoServicio').value;
-  const numEquipos = parseInt(document.getElementById('numEquipos').value);
-  const diasIniciales = parseInt(document.getElementById('diasIniciales').value);
-  const diasAdicionales = parseInt(document.getElementById('diasAdicionales').value);
+  const cliente = inputCliente.value.trim();
+  const idCliente = inputIdCliente.value.trim();
+  const telefono = inputTelefono.value.trim();
+  const email = inputEmail.value.trim();
+  const tipoServicio = inputTipoServicio.value;
+  const numEquipos = parseInt(inputNumEquipos.value) || 0;
+  const diasIniciales = parseInt(inputDiasIniciales.value) || 0;
+  const diasAdicionales = parseInt(inputDiasAdicionales.value) || 0;
 
-  // Validación de mínimo 2 equipos[cite: 3]
-  if (numEquipos < 2) {
-    alert("El número mínimo de equipos a alquilar es 2.");
+  // --- Validación: Nombre del cliente no vacío ---
+  if (cliente === '') {
+    alert("El nombre del cliente no puede estar vacío ni contener solo espacios.");
+    inputCliente.focus();
     return;
   }
 
-  // Cálculos base[cite: 3]
-  const valorAlquiler = numEquipos * diasIniciales * PRECIO_DIA_EQUIPO;
-
-  // Cálculo de días adicionales con descuento progresivo (2% por día, tope de 50% para no quebrar la empresa)[cite: 3]
-  let valorDiasAdicionalesBruto = numEquipos * diasAdicionales * PRECIO_DIA_EQUIPO;
-  let porcentajeDescAdicional = Math.min(diasAdicionales * 0.02, 0.50); //[cite: 3]
-  let valorDiasAdicionales = valorDiasAdicionalesBruto * (1 - porcentajeDescAdicional);
-
-  // Ajustes según tipo de servicio[cite: 3]
-  let ajusteServicio = 0;
-  if (tipoServicio === "Fuera de la ciudad") {
-    ajusteServicio = (valorAlquiler + valorDiasAdicionales) * 0.05; // 5% incremento[cite: 3]
-  } else if (tipoServicio === "Dentro del establecimiento") {
-    ajusteServicio = -((valorAlquiler + valorDiasAdicionales) * 0.05); // 5% descuento[cite: 3]
+  // --- Validación: ID Cliente ---
+  if (idCliente === '') {
+    alert("El ID del cliente es obligatorio.");
+    inputIdCliente.focus();
+    return;
   }
 
-  // Total acumulado
-  const totalPagar = valorAlquiler + valorDiasAdicionales + ajusteServicio;
+  // --- Validación: Teléfono (mínimo 7 dígitos) ---
+  if (telefono === '' || telefono.length < 7) {
+    alert("Por favor ingrese un número de teléfono válido (mínimo 7 dígitos).");
+    inputTelefono.focus();
+    return;
+  }
 
-  // Formato exacto de salida de la imagen recibida[cite: 2]
-  const salida = 
+  // --- Validación: Formato de correo electrónico ---
+  const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!regexEmail.test(email)) {
+    alert("Ingrese un correo electrónico con un formato válido (ejemplo: usuario@correo.com).");
+    inputEmail.focus();
+    return;
+  }
+
+  // --- Validación: Número de equipos (Mínimo 2) ---[cite: 3]
+  if (numEquipos < 2) {
+    alert("Requerimiento ALQUIPC: El número mínimo de equipos a alquilar es de 2.");
+    inputNumEquipos.focus();
+    return;
+  }
+
+  // --- Validación: Días iniciales y adicionales ---[cite: 3]
+  if (diasIniciales < 1) {
+    alert("El número de días iniciales debe ser al menos 1.");
+    inputDiasIniciales.focus();
+    return;
+  }
+
+  if (diasAdicionales < 0) {
+    alert("El número de días adicionales no puede ser negativo.");
+    inputDiasAdicionales.focus();
+    return;
+  }
+
+  // =================================================================
+  // 3. CÁLCULOS DE FACTURACIÓN
+  // =================================================================
+
+  // Valor base del alquiler inicial ($35.000 x Equipos x Días Iniciales)[cite: 3]
+  const valorAlquiler = numEquipos * diasIniciales * PRECIO_DIA_EQUIPO;
+
+  // Cálculo de Días Adicionales:
+  // Regla: 2% por día adicional[cite: 3].
+  // Mejora para proteger a la empresa: Se fija un tope máximo del 50% de descuento[cite: 3].
+  const valorBrutoDiasAdicionales = numEquipos * diasAdicionales * PRECIO_DIA_EQUIPO;
+  const porcentajeDescAdicional = Math.min(diasAdicionales * 0.02, 0.50); // Máximo 50% de descuento[cite: 3]
+  const montoDescuentoDiasAdicionales = valorBrutoDiasAdicionales * porcentajeDescAdicional;
+  const valorNetoDiasAdicionales = valorBrutoDiasAdicionales - montoDescuentoDiasAdicionales;
+
+  // Ajustes por Tipo de Servicio:
+  // - Fuera de la ciudad: +5% de incremento[cite: 3].
+  // - Dentro del establecimiento: -5% de descuento adicional[cite: 3].
+  const subtotalFactura = valorAlquiler + valorNetoDiasAdicionales;
+  let incrementoServicio = 0;
+  let descuentoServicio = 0;
+
+  if (tipoServicio === "Fuera de la ciudad") {
+    incrementoServicio = subtotalFactura * 0.05; //[cite: 3]
+  } else if (tipoServicio === "Dentro del establecimiento") {
+    descuentoServicio = subtotalFactura * 0.05; //[cite: 3]
+  }
+
+  // Descuentos totales a reflejar en la factura
+  const totalDescuentos = montoDescuentoDiasAdicionales + descuentoServicio;
+
+  // Valor Total Final a Pagar
+  const totalAPagar = subtotalFactura + incrementoServicio - descuentoServicio;
+
+  // =================================================================
+  // 4. GENERACIÓN DE LA SALIDA FORMATO SENA[cite: 2]
+  // =================================================================
+  const salidaFactura = 
 `                'A L Q U I P C'
 
 Cliente                   ${cliente}
@@ -52,15 +146,15 @@ Numero de Equipos:        ${numEquipos}
 No. Días Iniciales:       ${diasIniciales}
 Valor Alquiler:           $ ${valorAlquiler}
 No. Días adicionales:     ${diasAdicionales}
-Valor días adicionales:   $ ${Math.round(valorDiasAdicionales)}
-Descuentos/Ajustes:       $ ${Math.round(ajusteServicio)}
+Valor días adicionales:   $ ${Math.round(valorNetoDiasAdicionales)}
+Descuentos:               $ ${Math.round(totalDescuentos)}
 
-Total a pagar:            $ ${Math.round(totalPagar)}
+Total a pagar:            $ ${Math.round(totalAPagar)}
 
 Factura generada por el  S E N A
 
 Gracias por utilizar nuestros servicios...!!!`;
 
-  // Despliegue en consola gráfica[cite: 2]
-  document.getElementById('output-terminal').textContent = salida;
+  // Imprimir resultado en la consola interactiva[cite: 2]
+  outputTerminal.textContent = salidaFactura;
 });
