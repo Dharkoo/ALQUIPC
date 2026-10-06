@@ -1,6 +1,6 @@
 // Constante base según los requerimientos del negocio ($35.000 por día/equipo)[cite: 3]
 const PRECIO_DIA_EQUIPO = 35000;
-
+const MIN_LONGITUD_NOMBRE = 3;
 // Referencias a los elementos del formulario y la terminal
 const form = document.getElementById('factura-form');
 const inputCliente = document.getElementById('cliente');
